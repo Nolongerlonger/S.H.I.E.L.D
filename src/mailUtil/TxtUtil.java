@@ -1,9 +1,11 @@
-package MailUtil;
+package mailUtil;
 
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import logUtil.LogUtil;
 
 
 /**
@@ -14,10 +16,9 @@ public class TxtUtil {
 
     //成功订阅时候提示邮件文本内容sub=Subscribe
     public static String successSubText(String bookName,String bookLink,String bookMail,String stratTime){
-        DateFormat dateFormat=new SimpleDateFormat();
-        Date date=new Date();
+
         String result="";
-        result+="\n\n你好\n";
+        result+="你好\n";
         result+="这封邮件是为了提醒您，您已成功通过S.H.I.E.L.D.美剧订阅系统订阅了相关美剧的提醒\n";
         result+="\n";
         result+="-------------------------------------------------------------------\n\n";
@@ -29,9 +30,9 @@ public class TxtUtil {
 
         result+="注意，此封邮件由系统自动发送，请勿回复\n";
         result+="若有反馈信息可于 Github 提 issue"+"\n";
-        result+="项目地址:"+"https://github.com/Ericwyn/S.H.I.E.L.D"+"\n\n";
+        result+="项目地址："+"https://github.com/Ericwyn/S.H.I.E.L.D"+"\n\n";
 
-        result+="发送于"+date.toString();
+        result+="发送于"+ LogUtil.sdf.format(new Date());
         return result;
     }
 
@@ -44,10 +45,8 @@ public class TxtUtil {
     }
 
     public static String haveNewText(String bookName,String newEName,String ed2k){
-        DateFormat dateFormat=new SimpleDateFormat();
-        Date date=new Date();
         String result="";
-        result+="\n\n你好\n";
+        result+="你好\n";
         result+="你订阅的美剧已有更新\n";
         result+="\n";
         result+="-------------------------------------------------------------------\n\n";
@@ -58,9 +57,9 @@ public class TxtUtil {
 
         result+="注意，此封邮件由系统自动发送，请勿回复\n";
         result+="若有反馈信息可于 Github 提 issue"+"\n";
-        result+="项目地址:"+"https://github.com/Ericwyn/S.H.I.E.L.D"+"\n\n";
+        result+="项目地址："+"https://github.com/Ericwyn/S.H.I.E.L.D"+"\n\n";
 
-        result+="发送于"+date.toString();
+        result+="发送于"+ LogUtil.sdf.format(new Date());
         return result;
     }
 

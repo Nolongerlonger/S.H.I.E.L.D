@@ -1,4 +1,4 @@
-import org.omg.CORBA.portable.OutputStream;
+package logUtil;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -11,7 +11,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * 日志文件的操作类
@@ -19,12 +18,12 @@ import java.util.List;
  */
 public class LogUtil {
 
-    private static final  SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public static final  SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
      * 判断用户日志文件是否已经存在
-     * @param path  传入一个日志文件地址，此方法只能由GetNews新建时候调用
-     * @return  返回值，若为false则表示
+     * @param path  传入一个日志文件地址
+     * @return  返回值，若为false则表示创建文件失败，ture则表示文件创建成功
      */
     public static boolean createdataPath(String path){
         File file=new File(path);
@@ -139,7 +138,7 @@ public class LogUtil {
     public static void writeAErrorLog(String logMsg){
         try {
             BufferedWriter bufferedWriter=new BufferedWriter(new FileWriter("userData/error.log",true));
-            bufferedWriter.write(logMsg+"\t\t"+sdf.format(new Date()));
+            bufferedWriter.write(sdf.format(new Date())+"\t\t"+logMsg);
             bufferedWriter.flush();
             bufferedWriter.newLine();
             bufferedWriter.flush();

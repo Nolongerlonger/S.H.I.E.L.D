@@ -1,18 +1,13 @@
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import MailUtil.*;
-import sun.rmi.runtime.Log;
+import logUtil.LogUtil;
 
 /**
  * 主方法
@@ -28,6 +23,43 @@ public class Main {
         LogUtil.createConfig();     //创建配置文件
         LogUtil.createErrorLog();   //创建日志文件
         setMaxThreadNum();          //设置线程池参数
+        for(;;){
+            System.out.println("运行模式：新增订阅模式");
+            System.out.println("------------------------------------------------------------");
+            System.out.println("1，搜索美剧和新增订阅");
+            System.out.println("2，开启更新监听系统");
+            System.out.println("3，关闭更新监听系统");
+            System.out.println("4，切换为自动模式(需要手动重启)");
+            System.out.println("5，退出系统");
+            Scanner sc=new Scanner(System.in);
+            int code=4;
+            try {
+                code=sc.nextInt();
+            }catch (Exception e){
+                System.out.println("输入错误，系统退出");
+            }
+
+            switch (code){
+                case 1:
+                    search();
+                    break;
+                case 2:
+                    startRun();
+                    break;
+                case 3:
+                    stopRun();
+                    break;
+                case 4:
+                    break;
+                case 5:
+                    stopRun();
+                    System.exit(0);
+                    break;
+            }
+        }
+
+
+
 
 
 //        System.out.println("输入你要搜索的关键词");
@@ -49,12 +81,68 @@ public class Main {
 //        System.out.println(TxtUtil.haveNewText("神盾局","lalalal","ed2k"));
 
     }
+
+
+    public static void search(){
+        System.out.println("输入你要搜索的关键词");
+        Scanner sc=new Scanner(System.in);
+        String searchFlag=sc.nextLine();
+        ArrayList<HashMap<String,Object>> list=WebUtil.search(searchFlag);
+        for(int i=0;i<list.size();i++){
+            System.out.println(""+i+":"+list.get(i).get("title"));
+//            System.out.println("\t"+list.get(i).get("href"));
+        }
+        System.out.println("输入编号继续查看");
+        int num=0;
+        try {
+            num=sc.nextInt();
+        }catch (Exception e){
+            System.out.println("输入错误");
+            return;
+        }
+
+        try {
+            show1((String)list.get(num).get("href"));
+        }catch (Exception e){
+
+        }
+
+        System.out.println("是否订阅(y/n):");
+        String code=sc.next();
+        switch (code){
+            case "y":
+                System.out.print("输入订阅邮箱:");
+                String email=sc.next();
+                if(!email.equals("")
+                        && email.matches("\\w[-\\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\\.)+[A-Za-z]{2,14}")){
+                    if(WebUtil.newABookConfig(email,
+                            (String)list.get(num).get("href"),      //d订阅的
+                            (String)list.get(num).get("title"))){
+
+                        System.out.println("订阅成功");
+
+                    }else {
+                        System.out.println("订阅失败，请查看userData/error.log");
+                    }
+                }else {
+                    System.out.println("请输入正确的邮箱");
+                }
+
+                break;
+            case "n":
+                break;
+        }
+
+    }
+
     public static void setMaxThreadNum(){
         try {
-            BufferedReader bufferedReader=new BufferedReader(new FileReader("sysytem.config"));
+            BufferedReader bufferedReader=new BufferedReader(new FileReader("system.config"));
             String[] flags=bufferedReader.readLine().split(" ");
             MaxThreadNum=Integer.parseInt(flags[1]);
         }catch (FileNotFoundException e){
+            LogUtil.writeAErrorLog("Main_setMaxThreadNum\t\t"+"没有找到system.config配置文件");
+            e.printStackTrace();
             System.exit(-4);
         }catch (Exception e){
             LogUtil.writeAErrorLog("Main_setMaxThreadNum\t\t"+"无法读取线程池数量设置参数");
@@ -75,6 +163,7 @@ public class Main {
             timerTasks[i]=getNews;
             timer.schedule(getNews,0L,GetNews.PERIOD_HOUR);//即刻开始线程，而后每隔一个小时这个线程自动运行一遍
         }
+        System.out.println("开启了"+(list.size()>MaxThreadNum?MaxThreadNum:list.size())+"线程");
     }
 
     /**

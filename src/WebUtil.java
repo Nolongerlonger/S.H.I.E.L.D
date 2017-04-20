@@ -1,7 +1,7 @@
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
-
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -9,9 +9,14 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import logUtil.LogUtil;
+import mailUtil.MailUtil;
+import mailUtil.TxtUtil;
 
 /**
  * 封装一系列的爬虫方法
@@ -27,6 +32,7 @@ public class WebUtil {
                 URL realURL=new URL(url);
                 URLConnection connection=realURL.openConnection();
                 connection.setConnectTimeout(5000);
+                //机智的伪装成linux下面的chrome，不要问了我最萌
                 connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
 //                connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8 ");
 //                connection.setRequestProperty("Accept-Encoding","gzip, deflate, sdch");
@@ -146,23 +152,65 @@ public class WebUtil {
                     && !str.contains("<span")){
                 String href=getStringByRegex(str,"href=\"(.+?)\"");
                 String title=getStringByRegex(str,"title=\"(.+?)\"");
-//                System.out.println(str);
+
                 HashMap<String ,Object> map=new HashMap<>();
-//                if(title!=null){
+
                 map.put("title",title.replace("title=","").replace("\"",""));
                 map.put("href",href.replace("href=\"","").replace("\"",""));
 
-//                    System.out.print(title.replace("title=","").replace("\"",""));
-//                }
-//                System.out.print("\t");
-//                if(href!=null){
-//                    System.out.println(href.replace("href=\"","").replace("\"",""));
-//                }
                 list.add(map);
             }
         }
         return list;
     }
+
+    /**
+     * 新增一条book记录，包括添加system.config的信息，以及新建userData里面的配置文件
+     * @return 返回是否成功
+     */
+    public static boolean newABookConfig(String mail,String linkUrl,String title){
+        try {
+            //添加system.config信息
+            BufferedWriter bufferedWriter=new BufferedWriter(new FileWriter("system.config",true));
+            bufferedWriter.write(mail+" "+linkUrl);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+            bufferedWriter.close();
+            //新疆userData信息
+            if(LogUtil.createdataPath("userData/"+mail+".log")){        //创建用户配置文件成功的话
+                //新建用户配置信息
+                BufferedWriter bufferedWriter1=new BufferedWriter(new FileWriter("userData/"+mail+".log"));
+                String date=LogUtil.sdf.format(new Date());
+                bufferedWriter1.write("startTime:"+date);
+                bufferedWriter1.newLine();
+                bufferedWriter1.write("linkUrl:"+linkUrl);
+                bufferedWriter1.newLine();
+                bufferedWriter1.write("mail:"+mail);
+                bufferedWriter1.newLine();
+                bufferedWriter1.write("mailNum:"+0);
+                bufferedWriter1.newLine();
+                bufferedWriter1.newLine();
+
+                bufferedWriter1.flush();
+                bufferedWriter1.close();
+
+                //发送一份订阅邮件
+                MailUtil.sendEmail(
+                        TxtUtil.successSubTitle(),          //邮件的title
+                        TxtUtil.successSubText(title,linkUrl,mail,date),     //邮件的详情
+                        mail);                              //目标邮箱
+                return true;
+            }else {
+                //这里没有error日志写入，因为createdataPath方法里面已经完成了日志写入了
+                return false;
+            }
+        }catch (IOException ioe){
+            LogUtil.writeAErrorLog("WebUtil_newABookConfig\t\t"+"添加System.config或者userData/[userMail].log信息时候发生了错误");
+            ioe.printStackTrace();
+        }
+        return false;
+    }
+
 
     public static String getStringByRegex(String webResult,String classNme){
 //        Pattern p=Pattern.compile("div=\""+classNme+"(.+?)");

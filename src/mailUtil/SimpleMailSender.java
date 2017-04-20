@@ -1,4 +1,4 @@
-package MailUtil;
+package mailUtil;
 
 
 import java.util.Date;

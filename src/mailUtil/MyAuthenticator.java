@@ -1,4 +1,4 @@
-package MailUtil;
+package mailUtil;
 
 import javax.mail.*;
 

@@ -60,8 +60,6 @@ public class GetNews extends TimerTask  {
     @Override
     public void run() {
 //        this.startDate
-        if(LogUtil.createdataPath(privateDataPath)){
 
-        }
     }
 }

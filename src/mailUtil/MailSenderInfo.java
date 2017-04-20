@@ -1,4 +1,4 @@
-package MailUtil;
+package mailUtil;
 
 /**
  * 邮件信息类
