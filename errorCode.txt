@@ -1,0 +1,33 @@
+-1      系统无法新建错误日志文件          系统无法启动            可尝试手动创建userData/error.log文件
+-2      系统无法新增一行错误日志          系统退出
+-3      系统无法新建system.config文件    系统退出               可尝试手动在jar文件夹下新建配置文件
+-4      系统找不到system.config文件      系统退出
+
+
+关于system.config，
+第一行第一个数字，0代表自动开始模式，1代表手动开始模式，手动模式下能够使用搜索功能新增监听
+第一行第二个数字，代表多线程池的容量，默认是19（就不设定在20 你咬我啊）
+0 19
+[mailAdress] [linkUrl]
+[mailAdress] [linkUrl]
+[mailAdress] [linkUrl]
+[mailAdress] [linkUrl]
+
+
+关于用户配置文件 eg:    userData/ericwyn@mail.com.log
+
+startTime:          //代表开始时间
+linkUrl：            //订阅的url
+mail:               //代表订阅的邮箱
+mailNum:            //已经发送的邮件的数量
+
+mail-0：
+......               //mail-0的具体内容
+
+mail-1:
+......               //mail-1的具体内容
+
+
+关于系统的错误日志       error.log，前面的信息是代码的类名_发生error具体的方法名
+
+LogUtil_readAUserLog+\t\t+错误信息+自动打印的时间

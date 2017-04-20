@@ -12,14 +12,14 @@ public class MailUtil {
         mailInfo.setMailServerPort("25");
         mailInfo.setValidate(true);
         //认真信息
-        mailInfo.setUserName(Pw.MAILACCOUNT);
-        mailInfo.setPassword(Pw.SMTPPW);//您的邮箱密码
+        mailInfo.setUserName(Pw.MAIL_ACCOUNT);
+        mailInfo.setPassword(Pw.SMTP_PW);//您的邮箱密码
         //发送邮件地址
-        mailInfo.setFromAddress(Pw.MAILACCOUNT);    //邮件地址
+        mailInfo.setFromAddress(Pw.MAIL_ACCOUNT);    //邮件地址
 
         mailInfo.setToAddress(toAddress);   //收件人
 
-        //
+        //设置标题，设置文本
         mailInfo.setSubject(title);
         mailInfo.setContent(message);
 
