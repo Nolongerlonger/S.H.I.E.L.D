@@ -81,28 +81,18 @@ public class WebUtil {
         String[] labels=webResult.split("\n");
         for(int i=0;i<labels.length;i++){
             if(labels[i].contains("ed2k://|file|")){
-                String[] flags=labels[i].split("\"");
                 String ed2k="";
                 String name="";
-                for(int j=0;j<flags.length;j++){
-                    if(flags[j].contains("ed2k://|file|")){
-                        ed2k=flags[j];
-                        name=flags[j+1]
-                                .replace(" ","")
+                HashMap<String,Object> map=new HashMap<>();
+                map.put("ed2k",getStringByRegex(labels[i],"ed2k:\\/\\/\\|file\\|(.+?)\\|\\/"));
+                map.put("name",
+                        getStringByRegex(labels[i].replace(" ",""),"\\>(.+?)\\<\\/a\\>")
                                 .replace("</a>","")
-                                .replace("<br/>","")
-                                .replace("<","")
-                                .replace("/","")
-                                .replace(">","");
-                        HashMap<String,Object> map=new HashMap<>();
-                        map.put("ed2k",ed2k);
-                        map.put("name",name);
-                        list.add(map);
-                        break;
-                    }
-                }
+                                .replace(">",""));
+                list.add(map);
             }
         }
+
         return list;
     }
 
