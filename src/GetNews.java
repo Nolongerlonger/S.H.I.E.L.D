@@ -51,7 +51,6 @@ public class GetNews extends TimerTask  {
     /**
      * 线程的运行函数
      *
-     * 首次运行：发送通知邮件，然后开始监听相应的url的更新
      *
      * 已经存在
      *

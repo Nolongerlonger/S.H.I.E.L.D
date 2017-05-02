@@ -41,15 +41,30 @@ public class LogUtil {
         }
     }
 
+    public static ArrayList<HashMap<String,Object>> readAllUserConfig(){
+        return readAllUserConfig(false);
+    }
+
     /**
      * 读取system.config来得到所有的用户的config,包括email和linkurl,以便新建线程
+     * @param getSystemConfig  是否读取系统配置，也就是是否读取第一行，默认否
      * @return
      */
-    public static ArrayList<HashMap<String,Object>> readAllUserConfig(){
+    public static ArrayList<HashMap<String,Object>> readAllUserConfig(boolean getSystemConfig){
         ArrayList<HashMap<String,Object>> list=new ArrayList<>();
         try {
             BufferedReader bufferedReader=new BufferedReader(new FileReader("system.config"));
-            bufferedReader.readLine();  //消耗第一行的无关信息
+            if(!getSystemConfig){        //如果不需要读取第一行
+                bufferedReader.readLine();  //消耗第一行的无关信息
+            }else {
+                //读取第一行的信息，新建一个和其他不一样的hashmap来存储第一行的信息
+                String line=bufferedReader.readLine();
+                String[] flags=line.split(" ");
+                HashMap<String ,Object> map=new HashMap<>();
+                map.put("systemConfig",flags[0]);
+                map.put("maxThreadNum",flags[1]);
+                list.add(map);
+            }
             String line=null;
             while ((line=bufferedReader.readLine())!=null){
                 String[] flags=line.split(" ");
@@ -68,6 +83,7 @@ public class LogUtil {
         }
         return list;
     }
+
 
 
     /**

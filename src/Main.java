@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -30,7 +31,8 @@ public class Main {
             System.out.println("2，开启更新监听系统");
             System.out.println("3，关闭更新监听系统");
             System.out.println("4，切换为自动模式(需要手动重启)");
-            System.out.println("5，退出系统");
+            System.out.println("5，清楚所有订阅数据（自动备份）");
+            System.out.println("0，退出系统");
             Scanner sc=new Scanner(System.in);
             int code=4;
             try {
@@ -40,27 +42,37 @@ public class Main {
             }
 
             switch (code){
+                //搜索，新增订阅数据
                 case 1:
                     search();
                     break;
+
+                //启动运行
                 case 2:
                     startRun();
                     break;
+
+                //停止运行
                 case 3:
                     stopRun();
                     break;
+
+                //切换为自动模式(需要手动重启)
                 case 4:
                     break;
+
+                //清除所有订阅数据
                 case 5:
+                    deleteCache();
+                    break;
+
+                //退出系统
+                case 0:
                     stopRun();
                     System.exit(0);
                     break;
             }
         }
-
-
-
-
 
 //        System.out.println("输入你要搜索的关键词");
 //        Scanner sc=new Scanner(System.in);
@@ -188,4 +200,28 @@ public class Main {
         System.out.println("------------------------------------------------------------");
         System.out.println("最新一集："+WebUtil.getNewE(result));
     }
+
+    /**
+     * 删除所有的订阅数据、日志数据
+     * @param backup    是否进行备份
+     */
+    public static void deleteCache(boolean backup){
+        FileUtils.deleteDir("backup_dir");
+        if(backup){
+            FileUtils.moveDir("userData","backup_dir");
+            FileUtils.moveFile("system.config","backup_dir/system.config");
+            LogUtil.createConfig();     //创建配置文件
+            LogUtil.createErrorLog();   //创建日志文件
+        }else {
+            FileUtils.deleteDir("userData");
+            FileUtils.deleteFile("system.config");
+            LogUtil.createConfig();     //创建配置文件
+            LogUtil.createErrorLog();   //创建日志文件
+        }
+    }
+
+    /**
+     * 默认删除方法，会进行备份
+     */
+    public static void deleteCache(){deleteCache(true);}
 }

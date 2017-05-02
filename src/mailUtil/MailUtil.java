@@ -15,7 +15,7 @@ import logUtil.*;
  */
 public class MailUtil {
 
-    public static void sendEmail(String title,String message,String toAddress){
+    public static boolean sendEmail(String title,String message,String toAddress){
         MailSenderInfo mailInfo = new MailSenderInfo();
 
         mailInfo.setMailServerHost("smtp.163.com");
@@ -35,13 +35,26 @@ public class MailUtil {
 
         //这个类主要来发送邮件
         SimpleMailSender sms = new SimpleMailSender();
-        sms.sendTextMail(mailInfo);//发送文体格式
+        if (sms.sendTextMail(mailInfo)){    //发送文体格式
+            //发送成功就更新用户的log数据
+            chanceUserDataLog(toAddress,title,message);
+            return true;
+        }else {
+            LogUtil.writeAErrorLog("MailUtil_sendMail\t\t"+"邮件发送失败");
+            return false;
+        }
+
 //        sms.sendHtmlMail(mailInfo);//发送html格式
-        //更新用户的log数据
-        chanceUserDataLog(toAddress,title,message);
+
     }
 
-    //更新用户的log文件数据
+
+    /**
+     * 更新用户的log文件数据，添加一段mail信息
+     * @param userMail  用来定位用户log文件
+     * @param mailTitle 邮件的标题
+     * @param mailText  邮件的具体内容
+     */
     public static void chanceUserDataLog(String userMail,String mailTitle,String mailText){
         int mailNum=0;
         try {

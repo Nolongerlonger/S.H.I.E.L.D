@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -170,14 +171,17 @@ public class WebUtil {
      */
     public static boolean newABookConfig(String mail,String linkUrl,String title){
         try {
-            //添加system.config信息
-            BufferedWriter bufferedWriter=new BufferedWriter(new FileWriter("system.config",true));
-            bufferedWriter.write(mail+" "+linkUrl);
-            bufferedWriter.newLine();
-            bufferedWriter.flush();
-            bufferedWriter.close();
-            //新疆userData信息
+
+            //新建userData信息
             if(LogUtil.createdataPath("userData/"+mail+".log")){        //创建用户配置文件成功的话
+
+                //添加system.config信息
+                BufferedWriter bufferedWriter=new BufferedWriter(new FileWriter("system.config",true));
+                bufferedWriter.write(mail+" "+linkUrl);
+                bufferedWriter.newLine();
+                bufferedWriter.flush();
+                bufferedWriter.close();
+
                 //新建用户配置信息
                 BufferedWriter bufferedWriter1=new BufferedWriter(new FileWriter("userData/"+mail+".log"));
                 String date=LogUtil.sdf.format(new Date());
@@ -195,11 +199,17 @@ public class WebUtil {
                 bufferedWriter1.close();
 
                 //发送一份订阅邮件
-                MailUtil.sendEmail(
+                if(MailUtil.sendEmail(
                         TxtUtil.successSubTitle(),          //邮件的title
                         TxtUtil.successSubText(title,linkUrl,mail,date),     //邮件的详情
-                        mail);                              //目标邮箱
-                return true;
+                        mail))                  //目标邮箱
+                {
+                    return true;
+                }else {
+                    //要删除此次操作的缓存
+                    deleteABookConfig(mail);
+                    return false;
+                }
             }else {
                 //这里没有error日志写入，因为createdataPath方法里面已经完成了日志写入了
                 return false;
@@ -209,6 +219,48 @@ public class WebUtil {
             ioe.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * 删除一个用户的配置信息
+     * @param mail  需要删除的用户的邮件配置信息
+     * @return  返回成功与否
+     */
+    public static boolean deleteABookConfig(String mail){
+        File file=new File("userData/"+mail+".log");
+        if(!file.delete()){
+            System.out.println("删除配置文件失败");
+            LogUtil.writeAErrorLog("WebUtil_deleteABookConfig\t"+"删除配置文件"+"userData/"+mail+".log"+"失败");
+            return false;
+        }else {
+            //读取全部
+            ArrayList<HashMap<String,Object>> list=LogUtil.readAllUserConfig(true);
+            //找到那一行,并且清除
+            for (int i=0;i<list.size();i++){
+                if(((String)list.get(i).get("mail")).equals(mail)){
+                    list.remove(i);
+                    break;
+                }
+            }
+            //重新写入全部
+            try {
+                BufferedWriter bufferedWriter=new BufferedWriter(new FileWriter("system.config"));
+                bufferedWriter.write(list.get(0).get("systemConfig")+" "+list.get(0).get("maxThreadNum"));
+                if(list.size()>1){
+                    for(int i=1;i<list.size();i++){
+                        if(list.get(i)!=null){
+                            bufferedWriter.write(list.get(i).get("mail")+" "+list.get(i).get("linkUrl"));
+                        }
+                    }
+                }
+                bufferedWriter.close();
+                return true;
+            }catch (Exception e){
+                LogUtil.writeAErrorLog("WebUtil_deleteABookConfig"+"删除system.config条目"+mail+"失败");
+                return false;
+            }
+
+        }
     }
 
 
@@ -264,6 +316,5 @@ public class WebUtil {
         }
         return list;
     }
-
 
 }
