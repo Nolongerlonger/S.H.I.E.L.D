@@ -55,7 +55,7 @@ public class MailUtil {
      * @param mailTitle 邮件的标题
      * @param mailText  邮件的具体内容
      */
-    public static void chanceUserDataLog(String userMail,String mailTitle,String mailText){
+    private static void chanceUserDataLog(String userMail,String mailTitle,String mailText){
         int mailNum=0;
         try {
             //全部读取

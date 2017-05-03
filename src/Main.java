@@ -65,6 +65,10 @@ public class Main {
                 case 5:
                     deleteCache();
                     break;
+                //测试接口
+                case 6:
+                    System.out.println(WebUtil.getBookName("http://cn163.net/archives/23794/"));
+                    break;
 
                 //退出系统
                 case 0:
@@ -112,39 +116,43 @@ public class Main {
             System.out.println("输入错误");
             return;
         }
-
+        //是否有新的剧集
+        Boolean haveNewE=false;
         try {
-            show1((String)list.get(num).get("href"));
+            haveNewE=show1((String)list.get(num).get("href"));
         }catch (Exception e){
 
         }
+        //存在新的剧集，可订阅
+        if(haveNewE){
+            System.out.println("是否订阅(y/n):");
+            String code=sc.next();
+            switch (code){
+                case "y":
+                    System.out.print("输入订阅邮箱:");
+                    String email=sc.next();
+                    if(!email.equals("")
+                            && email.matches("\\w[-\\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\\.)+[A-Za-z]{2,14}")){
+                        if(WebUtil.newABookConfig(email,
+                                (String)list.get(num).get("href"),      //d订阅的
+                                (String)list.get(num).get("title"))){
 
-        System.out.println("是否订阅(y/n):");
-        String code=sc.next();
-        switch (code){
-            case "y":
-                System.out.print("输入订阅邮箱:");
-                String email=sc.next();
-                if(!email.equals("")
-                        && email.matches("\\w[-\\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\\.)+[A-Za-z]{2,14}")){
-                    if(WebUtil.newABookConfig(email,
-                            (String)list.get(num).get("href"),      //d订阅的
-                            (String)list.get(num).get("title"))){
+                            System.out.println("订阅成功");
 
-                        System.out.println("订阅成功");
-
+                        }else {
+                            System.out.println("订阅失败，请查看userData/error.log");
+                        }
                     }else {
-                        System.out.println("订阅失败，请查看userData/error.log");
+                        System.out.println("请输入正确的邮箱");
                     }
-                }else {
-                    System.out.println("请输入正确的邮箱");
-                }
 
-                break;
-            case "n":
-                break;
+                    break;
+                case "n":
+                    break;
+            }
+        }else {
+            System.out.println("剧集已完结，不可订阅");
         }
-
     }
 
     public static void setMaxThreadNum(){
@@ -185,9 +193,19 @@ public class Main {
         timer.cancel();
     }
 
+    public static void restartRun(){
+        stopRun();
+        startRun();
+    }
+    //
 
-    //暂时美剧详情页面的具体剧集和最新一集
-    public static void show1(String url) throws Exception{
+    /**
+     * 展示美剧详情页面的具体剧集和最新一集
+     * @param url   美剧的链接
+     * @return  是否有新剧集，没有的话返回false,有的话返回true
+     * @throws Exception
+     */
+    public static boolean show1(String url) throws Exception{
         String result=WebUtil.sendGet(url);
 //        System.out.println(result);
         System.out.println("------------------------------------------------------------");
@@ -198,7 +216,12 @@ public class Main {
         }
 
         System.out.println("------------------------------------------------------------");
-        System.out.println("最新一集："+WebUtil.getNewE(result));
+        String newE=WebUtil.getNewE(result);
+        System.out.println("待更新剧集为："+newE);
+        if(newE.equals("null")){
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -224,4 +247,6 @@ public class Main {
      * 默认删除方法，会进行备份
      */
     public static void deleteCache(){deleteCache(true);}
+
+
 }

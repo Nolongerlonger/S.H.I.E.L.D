@@ -63,4 +63,24 @@ public class TxtUtil {
         return result;
     }
 
+    public static String finishBookTitle(String bookName){return "您订阅的美剧"+bookName+"已完结";}
+
+    public static String finishBookText(String bookName,String bookLink){
+        String result="";
+        result+="你好\n";
+        result+="你订阅的美剧已完结\n";
+        result+="\n";
+        result+="-------------------------------------------------------------------\n\n";
+        result+="订阅名称："+bookName+"\n";
+        result+="订阅地址："+bookLink+"\n\n";
+        result+="-------------------------------------------------------------------\n\n";
+
+        result+="注意，此封邮件由系统自动发送，请勿回复\n";
+        result+="若有反馈信息可于 Github 提 issue"+"\n";
+        result+="项目地址："+"https://github.com/Ericwyn/S.H.I.E.L.D"+"\n\n";
+
+        result+="发送于"+ LogUtil.sdf.format(new Date());
+        return result;
+    }
+
 }

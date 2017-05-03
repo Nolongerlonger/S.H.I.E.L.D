@@ -24,11 +24,17 @@ import mailUtil.TxtUtil;
  * Created by ericwyn on 17-4-19.
  */
 public class WebUtil {
-
+    //自定义的最高请求次数，超过这个请求次数将会停止请求
+    public static final int MAX_SEND_NUM=33;
     public static String sendGet(String url) throws FileNotFoundException{
         String result="";
         BufferedReader in=null;
-        for(;;){
+        for(int i=0;i<=MAX_SEND_NUM;i++){
+            if(i==MAX_SEND_NUM){
+                System.out.println("请求次数超过30次，停止此次请求");
+                LogUtil.writeAErrorLog("WebUtil_sendGet\t\t"+"请求"+url+"次数超限制");
+                break;
+            }
             try {
                 URL realURL=new URL(url);
                 URLConnection connection=realURL.openConnection();
@@ -45,6 +51,7 @@ public class WebUtil {
                 }
 
             }catch (SocketTimeoutException e){
+                e.printStackTrace();
                 System.out.println("请求超时，重试");
                 continue;
             }catch (FileNotFoundException e){
@@ -83,6 +90,11 @@ public class WebUtil {
         return result;
     }
 
+    /**
+     * 得到网页上面的ed2k，通过list<Map>返回结果
+     * @param webResult 具体的美剧页面
+     * @return  返回由《name-名字》《ed2k-具体ed2k链接》组成的Map，所组成的List
+     */
     public static ArrayList<HashMap<String ,Object>> getEd2k(String webResult){
         ArrayList<HashMap<String ,Object>> list=new ArrayList<>();
         String[] labels=webResult.split("\n");
@@ -99,11 +111,25 @@ public class WebUtil {
                 list.add(map);
             }
         }
-
         return list;
     }
 
-    //获取待更新的集数目
+    /**
+     * 得到最新一集的HashMap的name内容
+     * @param url 具体的美剧页面的网址
+     * @return  返回一个String，最新一集的name属性的字符串（和getEd2k方法）
+     */
+    public static HashMap<String,Object> getLastEName(String url) throws FileNotFoundException{
+        String result=WebUtil.sendGet(url);
+        ArrayList<HashMap<String ,Object>> list=WebUtil.getEd2k(result);
+        return list.get(list.size()-1);
+    }
+
+    /**
+     * 获取待更新的剧集，如果没有待更新的剧集那么返回null
+     * @param webResult
+     * @return
+     */
     public static String getNewE(String webResult){
         String result="";
         String[] labels=webResult.split("\n");
@@ -124,6 +150,11 @@ public class WebUtil {
         return result;
     }
 
+    /**
+     * 人人美剧的搜索
+     * @param searchFlag    搜索的关键词，多个关键词用空格隔开
+     * @return  返回搜索结果，包含链接的名称，链接的地址
+     */
     public static ArrayList<HashMap<String ,Object>> search(String searchFlag){
         ArrayList<HashMap<String ,Object>> list=new ArrayList<>();
 
@@ -163,6 +194,36 @@ public class WebUtil {
             }
         }
         return list;
+    }
+
+    /**
+     * 通过url，订阅的剧集的名称
+     * @param url
+     * @return
+     */
+    public static String getBookName(String url){
+        try {
+            String result=WebUtil.sendGet(url);
+//            String[] flags=result.split("\n");
+//            for (String str:flags){
+//                    String href=getStringByRegex(str,"href=\"(.+?)\"");
+            String title=getStringByRegex(result,"class=\"entry_title\">(.+?)</")
+                    .replace("class=\"entry_title\">","")
+                    .replace("</","");
+        //<h2 class="entry_title">神盾局特工第四季/全集Agents Of SHIELD迅雷下载</h2>
+
+//            }
+            if(!title.equals("")){
+                return title;
+            }else {
+                return "未知标题剧集";
+            }
+
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+            LogUtil.writeAErrorLog("WebUtil_getBookName"+"\t\t"+"io错误，捕获异常");
+        }
+        return "S.H.I.E.L.D";
     }
 
     /**
@@ -207,7 +268,7 @@ public class WebUtil {
                     return true;
                 }else {
                     //要删除此次操作的缓存
-                    deleteABookConfig(mail);
+                    deleteABookConfig(mail,linkUrl);
                     return false;
                 }
             }else {
@@ -223,10 +284,10 @@ public class WebUtil {
 
     /**
      * 删除一个用户的配置信息
-     * @param mail  需要删除的用户的邮件配置信息
+     * @param mail  需要删除的用户的邮件配置信息,和System
      * @return  返回成功与否
      */
-    public static boolean deleteABookConfig(String mail){
+    public static boolean deleteABookConfig(String mail,String url){
         File file=new File("userData/"+mail+".log");
         if(!file.delete()){
             System.out.println("删除配置文件失败");
@@ -237,7 +298,8 @@ public class WebUtil {
             ArrayList<HashMap<String,Object>> list=LogUtil.readAllUserConfig(true);
             //找到那一行,并且清除
             for (int i=0;i<list.size();i++){
-                if(((String)list.get(i).get("mail")).equals(mail)){
+                if(((String)list.get(i).get("mail")).equals(mail)
+                        &&((String)list.get(i).get("linkUrl")).equals(mail)){
                     list.remove(i);
                     break;
                 }
@@ -263,6 +325,33 @@ public class WebUtil {
         }
     }
 
+    /**
+     * 完结一个用户的订阅，用户的数据将会移动到finishData文件夹里面
+     * @param mail
+     * @param linkUrl
+     */
+    public static void finishABookConfig(String mail,String linkUrl){
+        File file=new File("finishData/");
+        if(!file.isDirectory()){
+            file.mkdir();
+        }
+        File[] files=new File("UserData/").listFiles();
+        for(File fileFlag:files){
+            if(fileFlag.getName().contains(mail)){
+                String[] readTxt=FileUtils.readTxt(fileFlag.getAbsolutePath()).split("\n");
+                if(readTxt[2].equals(linkUrl)){
+                    //复制用户日志文件
+                    FileUtils.copyFile("UserData/"+fileFlag.getName(),"finishData/"+fileFlag.getName());
+                    //删除文件的信息
+                    WebUtil.deleteABookConfig(mail,linkUrl);
+                    //重启订阅线程池
+                    Main.restartRun();
+                }
+            }
+        }
+
+
+    }
 
     public static String getStringByRegex(String webResult,String classNme){
 //        Pattern p=Pattern.compile("div=\""+classNme+"(.+?)");

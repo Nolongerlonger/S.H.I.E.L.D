@@ -1,8 +1,14 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+
+import logUtil.LogUtil;
 
 /**
  * 封装文件的增删改，和文件、文件夹的复制，粘贴
@@ -195,6 +201,26 @@ public class FileUtils {
         }
         System.out.println("移动文件夹"+dirFromPath+"失败");
         return false;
+    }
+
+    /**
+     * 文本文件读取工具
+     * @param txtPath   文本文件的位置
+     * @return  返回String
+     */
+    public static String readTxt(String txtPath){
+        StringBuffer result=new StringBuffer();
+        try {
+            BufferedReader bufferedReader=new BufferedReader(new FileReader(txtPath));
+            String line=null;
+            while ((line=bufferedReader.readLine())!=null){
+                result.append(line);
+                result.append("\n");
+            }
+        }catch (IOException ioe){
+            ioe.printStackTrace();
+        }
+        return result.toString();
     }
 
 }
