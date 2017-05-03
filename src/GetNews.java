@@ -12,7 +12,7 @@ import mailUtil.TxtUtil;
  */
 public class GetNews extends TimerTask  {
     //时间间隔，一个小时
-    public static final long PERIOD_HOUR = 60 * 1000 * 20;  //多少分钟轮询一次 * 60;
+    public static final long PERIOD_HOUR = 60 * 1000 * 30;  //多少分钟轮询一次 * 60;
     public static final String dataPath="uesrData/";
 
     //开始的时间
@@ -90,14 +90,14 @@ public class GetNews extends TimerTask  {
                     try {
                         if(WebUtil.getNewE(WebUtil.sendGet(url)).equals("null")){
                             System.out.println(mailAdress+"的一个订阅已经完结");
+                            //发送完结通知
                             MailUtil.sendEmail(
-                                    //新的标题
                                     TxtUtil.finishBookTitle(bookName),
-                                    //构建邮件的内容，需要获取剧集的名称，最新一集的集数，以及ed2k地址
                                     TxtUtil.finishBookText(bookName,url),
-                                    //发送邮件的地址
                                     mailAdress);
+                            //完结一个用户的订阅，备份用户数据到backup_dir，并且重启监听系统
                             WebUtil.finishABookConfig(mailAdress,url);
+
                         }
                     }catch (FileNotFoundException e){
                         e.printStackTrace();
