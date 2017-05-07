@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -26,64 +27,70 @@ public class Main {
         LogUtil.createConfig();     //创建配置文件
         LogUtil.createErrorLog();   //创建日志文件
         setMaxThreadNum();          //设置线程池参数
-        for(;;){
-            System.out.println("运行模式：新增订阅模式");
-            System.out.println("------------------------------------------------------------\n");
-            System.out.println("1，搜索美剧和新增订阅");
-            System.out.println("-------------------------");
-            System.out.println("2，开启更新监听系统");
-            System.out.println("3，关闭更新监听系统");
-            System.out.println("4，重启更新监听系统");
-            System.out.println("-------------------------");
-            System.out.println("5，切换为自动模式(需要手动重启)");
-            System.out.println("6，清除所有订阅数据（自动备份）");
-            System.out.println("-------------------------");
-            System.out.println("0，退出系统");
-            Scanner sc=new Scanner(System.in);
-            int code=4;
-            try {
-                code=sc.nextInt();
-            }catch (Exception e){
-                System.out.println("输入错误，系统退出");
-            }
+        if(getRunType()==0){
+            startRun();
+        }else {
+            for(;;){
+                System.out.println("运行模式：新增订阅模式");
+                System.out.println("------------------------------------------------------------\n");
+                System.out.println("1，搜索美剧和新增订阅");
+                System.out.println("-------------------------");
+                System.out.println("2，开启更新监听系统");
+                System.out.println("3，关闭更新监听系统");
+                System.out.println("4，重启更新监听系统");
+                System.out.println("-------------------------");
+                System.out.println("5，切换为自动模式(需要手动重启)");
+                System.out.println("6，清除所有订阅数据（自动备份）");
+                System.out.println("-------------------------");
+                System.out.println("0，退出系统");
+                Scanner sc=new Scanner(System.in);
+                int code=4;
+                try {
+                    code=sc.nextInt();
+                }catch (Exception e){
+                    System.out.println("输入错误，系统退出");
+                }
 
-            switch (code){
-                //搜索，新增订阅数据
-                case 1:
-                    search();
-                    break;
+                switch (code){
+                    //搜索，新增订阅数据
+                    case 1:
+                        search();
+                        break;
 
-                //启动运行
-                case 2:
-                    startRun();
-                    break;
+                    //启动运行
+                    case 2:
+                        startRun();
+                        break;
 
-                //停止运行
-                case 3:
-                    stopRun();
-                    break;
+                    //停止运行
+                    case 3:
+                        stopRun();
+                        break;
 
-                //重启监听
-                case 4:
-                    restartRun();
-                    break;
+                    //重启监听
+                    case 4:
+//                    restartRun();
+                        System.out.println("测试功能尚未开放");
+                        break;
 
-                //切换为自动模式(需要手动重启)
-                case 5:
-                    break;
+                    //切换为自动模式(需要手动重启)
+                    case 5:
+                        break;
 
-                //清除所有订阅数据
-                case 6:
-                    deleteCache();
-                    break;
+                    //清除所有订阅数据
+                    case 6:
+                        deleteCache();
+                        break;
 
-                //退出系统
-                case 0:
-                    stopRun();
-                    System.exit(0);
-                    break;
+                    //退出系统
+                    case 0:
+                        stopRun();
+                        System.exit(0);
+                        break;
+                }
             }
         }
+
 
     }
 
@@ -169,13 +176,16 @@ public class Main {
      */
     private static void startRun(){
         if(!systemRun){
+
             ArrayList<HashMap<String,Object>> list=LogUtil.readAllUserConfig();
             timerTasks=new TimerTask[list.size()>MaxThreadNum?MaxThreadNum:list.size()];
             //对文件进行遍历，i小于MaxThreadNum或者list.size()两者中更小的那个，也就是最大无法超过MaxThreadNum
             for(int i=0;i<(list.size()>MaxThreadNum?MaxThreadNum:list.size());i++){
-                TimerTask getNews=new GetNews((String)list.get(i).get("mail"),(String)list.get(i).get("linkUrl"));
-                timerTasks[i]=getNews;
-                timer.schedule(getNews,0L,GetNews.PERIOD_HOUR);//即刻开始线程，而后每隔一个小时这个线程自动运行一遍
+                if(timerTasks[i]==null){
+                    TimerTask getNews=new GetNews((String)list.get(i).get("mail"),(String)list.get(i).get("linkUrl"));
+                    timerTasks[i]=getNews;
+                }
+                timer.schedule(timerTasks[i],0L,GetNews.PERIOD_HOUR);//即刻开始线程，而后每隔一个时间参数这个线程自动运行一遍
             }
             System.out.println("开启了"+(list.size()>MaxThreadNum?MaxThreadNum:list.size())+"线程");
             systemRun=true;
@@ -253,5 +263,34 @@ public class Main {
      */
     private static void deleteCache(){deleteCache(true);}
 
+    /**
+     * 获取程序的运行模式，也就是system.config的第一行第一个参数
+     * @return  返回运行参数，1代表手动开始模式，0代表自动运行模式,如果找不到文件就以手动开始模式运行
+     */
+    private static int getRunType(){
+        int type=1;
+        try {
+            BufferedReader bufferedReader=new BufferedReader(new FileReader("system.config"));
+            String line=null;
+            if((line=bufferedReader.readLine())!=null){
+                String tpyeFlag=line.substring(0,1);   //第一行第一个字符就是了
+                try {
+                    type=Integer.parseInt(tpyeFlag);
+                }catch (Exception e){
+                    e.printStackTrace();
+                    LogUtil.writeAErrorLog("Main_getRunType\t\t"+"转换运行模式代码从字符串到数字失败，以手动模式开始");
+                }
+            }
+
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+            LogUtil.writeAErrorLog("Main_getRunType\t\t"+"获取程序运行模式失败，没有系统配置文件，以手动模式开始");
+//            System.exit(-4);      //直接手动模式开始吧，手动模式会自动创建配置文件，修复这个错误
+        }catch (IOException ioe){
+            ioe.printStackTrace();
+            LogUtil.writeAErrorLog("Main_getRunType\t\t"+"读取文件中的运行模式失败，以手动模式开始");
+        }
+        return type;
+    }
 
 }
